@@ -1,12 +1,12 @@
-# py-pinger
+# pypinger
 
-**py-pinger** is a Python script for gathering ping statistics for one or more target hosts.  
+**pypinger** is a Python script for gathering ping statistics for one or more target hosts.  
 
-py-pinger can be used to:
+pypinger can be used to:
 - identify devices that are up or down on the network
 - trouble shoot network issues (dropped packets, network congestion, ...)
 
-**py-pinger** 
+**pypinger** 
 - Only uses standard python modules
 - Tested on Windows and Linux
 - Provides output in multiple formats (csv, json, text)
@@ -21,17 +21,17 @@ Statistics captured for each host are:
 
 ## Installation
 
-To install/use py-pinger, you may: 
+To install/use pypinger, you may: 
 
 | Use | Command |
 | ------------- | --------------------------|
-| github [source](https://github.com/JavaWiz1/py-pinger) | git clone https://github.com/javawiz1/py-pinger.git |
-| [pip ](https://pip.pypa.io/en/stable/) | pip install py-pinger [--user] |
-| [pipx](https://pipx.pypa.io/stable/) | pipx install py-pinger | 
+| github [source](https://github.com/JavaWiz1/pypinger) | git clone https://github.com/javawiz1/pypinger.git |
+| [pip ](https://pip.pypa.io/en/stable/) | pip install pypinger [--user] |
+| [pipx](https://pipx.pypa.io/stable/) | pipx install pypinger | 
 
 ## Usage
 ```
-usage: py-pinger.py [-h] [-i FILENAME] [-o {csv,json,jsonf,text}] [-c COUNT] [-w WAIT] [-v] [host ...]
+usage: pypinger.py [-h] [-i FILENAME] [-o {csv,json,jsonf,text}] [-c COUNT] [-w WAIT] [-v] [host ...]
 
 positional arguments:
   host                  List of one or more hosts to ping
@@ -61,32 +61,38 @@ options:
 
 ### Running from python source
 
-When running from the source code
-- cd to the source directory
-- run the following command
-``` python py-pinger.py host1 ```
-
+When running from the source code, cd to the source directory, then run by using one of the following commands...
+<code><ul><ul>
+  <li>python pypinger.py <i>host1</i></li>
+  <li>python pypinger.py <i>host1 [[host2][host3]...]</i></li>
+  <li>python pypinter.py -i <i>hostlist.txt</i></li>
+</ul></ul></code>
 
 ### If installed via pip or pipx
 
 The install creates an [entrypoint](https://packaging.python.org/en/latest/specifications/entry-points/) so that
 the script can be called like an executable. 
+<code><ul><ul>
+  <li>pypinger <i>host1</i></li>
+  <li>pypinger <i>host1 [[host2][host3]...]</i></li>
+  <li>pypinter -i <i>hostlist.txt</i></li>
+</ul></ul></code>
 
-``` py-pinger host1 ```
-
-**Note:**
-   
-&nbsp;&nbsp;&nbsp;&nbsp;```python py-pinger.py host1``` and ```py-pinger host1``` are identical.
+**Note:**   
+&nbsp;&nbsp;&nbsp;&nbsp;```python pypinger.py host1``` and ```pypinger host1``` are identical.
 
 ## Example
-```bash
-python py-pinger.py pc1 pc2 pc3 pc4 pc5
-Parameters -
-     5 Target hosts
-     4 Requests per host
-  2000 Response timeout (ms)
+```
+python pypinger.py pc1 pc2 pc3 pc4 pc5 google.com
 
-  Processing ......
+----------------------------------------
+pypinger parameters
+----------------------------------------
+  Source host    : my-laptop
+  Target hosts   :    20
+  Worker threads :    20
+  Req per host   :     4
+  Wait timeout   :  2000 (ms)
 
                                           Packets           RTT
 Source          Target                Sent Recv Lost   Min  Max  Avg  Error Msg
@@ -96,16 +102,17 @@ my-laptop       pc2                      4    4    0     6    9    8
 my-laptop       pc3                      4    4    0     4    5    4
 my-laptop       pc4                      0    0    0     0    0    0  (1) offline?
 my-laptop       pc5                      4    4    0     6   18   11  
+my-laptop       google.com               4    4    0    29   32   31
 
-5 hosts output in 7.2 seconds.
+6 hosts processed in 7.2 seconds.
 ```
 
 ## Tips
 1. Console messages are sent to stderr, output data to stdout.  You can redirect stdout, to create a file with just 
 the csv as follows:
 ```
-python py-pinger.py pc1 pc2 pc3 -o csv > pinger.csv
+python pypinger.py pc1 pc2 pc3 -o csv > pinger.csv
 ```
 
 2. If installed via pip or pipx, an entrypoint was created, so as long as you have the proper path, 
-   you can run py-pinger (instead of cd to proper directory and running python py-pinger.py)
+   you can run pypinger (instead of cd to proper directory and running python pypinger.py)

@@ -9,6 +9,7 @@ import sys
 from argparse import ArgumentParser
 from dataclasses import dataclass, field
 from datetime import datetime as dt
+from time import sleep
 from typing import Dict, List, Union
 
 LOGGER = logging.getLogger('pinger')
@@ -21,6 +22,9 @@ class DEFAULTS:
     REQUEST_TIMEOUT_WINDOWS: int = 2000
     DEBUG_FORMAT = '%(asctime)s %(levelname)s %(message)s'
     CONSOLE_FORMAT = '%(message)s'
+
+ESC='\u001b'    
+CURSOR_CLEAR_LINE = f'{ESC}[2K'
 
 #========================================================================================================================    
 @dataclass
@@ -40,6 +44,18 @@ class PingResult():
 
 #========================================================================================================================    
 class Pinger():
+    '''
+    Given a host (or list of hosts), ping and capture net stats for each target.
+    
+    ex.
+        pinger = Pinger('google.com')
+        pinger.ping_targets()
+        print(pinger.results)
+    or
+        pinger = Pinger('google.com', 'myLaptop', 'msn.com')
+        pinger.ping_targets()
+        print(pinger.results)    
+    '''
     def __init__(self, target: Union[str, List]):
         self._source_host: str = socket.gethostname()
         self._target_dict: dict = {}
@@ -51,12 +67,7 @@ class Pinger():
         self._start_time: dt = None
         self._end_time: dt = None
 
-    def to_dict(self) -> Dict:
-        result_dict = {}
-        for host, entry in self._target_dict.items():
-            result_dict[host] = entry.to_dict()
-        return result_dict
-
+    # == Public Properties ==========================================================================
     @property
     def source_host(self) -> str:
         return self._source_host
@@ -64,12 +75,8 @@ class Pinger():
     @property
     def elapsed_seconds(self) -> str:
         if self._start_time is None or self._end_time is None:
-            return ''
+            return 'undetermined elasped time'
         return f'{(self._end_time - self._start_time).total_seconds():.1f} seconds'
-    
-    @property
-    def results(self) -> Dict[str, PingResult]:
-        return self._target_dict
     
     @property
     def num_requests(self) -> int:
@@ -93,25 +100,66 @@ class Pinger():
         else:
             self._request_timeout = value
 
+    @property
+    def results(self) -> Dict[str, PingResult]:
+        '''Dictionary of ping results.  Key is the target hostname.'''
+        return self._target_dict
+    
+    # == Public Functions ==========================================================================
+    def to_dict(self) -> Dict:
+        '''Return ping results as a dictionary'''
+        result_dict = {}
+        for host, entry in self._target_dict.items():
+            result_dict[host] = entry.to_dict()
+        return result_dict
+
     def ping_targets(self):
+        '''Ping each target and gather statistics.'''
         num_workers = min(DEFAULTS.MAX_THREADS, len(self._target_dict))
         timeout_type = 'ms' if is_windows() else 'secs'
-        LOGGER.info('Parameters -')
-        LOGGER.info(f' {len(self._target_dict):5d} Target hosts')
-        LOGGER.info(f' {self.num_requests:5d} Requests per host')
-        LOGGER.info(f' {self.request_timeout:5d} Response timeout ({timeout_type})')
-        
+        LOGGER.info('')
+        LOGGER.info('-'*40)
+        LOGGER.info('pypinger parameters')
+        LOGGER.info('-'*40)
+        LOGGER.info(f'  Source host    : {self.source_host}')
+        LOGGER.info(f'  Target hosts   : {len(self._target_dict):5d}')
+        LOGGER.info(f'  Worker threads : {num_workers:5d}')
+        LOGGER.info(f'  Req per host   : {self.num_requests:5d}')
+        LOGGER.info(f'  Wait timeout   : {self.request_timeout:5d} ({timeout_type})')
+        LOGGER.info('')
+
         eprint('\n  Processing .', end='', flush=True)
         self._start_time = dt.now()
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
             executor.map(self._capture_target, self._target_dict.keys())
         self._end_time = dt.now()
-        eprint('\n')
+        eprint(' Done.', end='', flush=True)
+        sleep(1.5)
+        eprint(CURSOR_CLEAR_LINE)
         
         LOGGER.debug(f'results: {self._target_dict}')
 
+    def output_results(self, output_type: str):
+        if 'json' in output_type:
+            self._output_json(output_type)
+        elif output_type == 'csv':
+            self._output_csv()
+        elif output_type == 'text':
+            # default to text
+            self.output_text()
+        else:
+            LOGGER.error(f'ERROR: Unknown output type [{output_type}]')
+            LOGGER.error('  must be one of: csv, json, jsonf or text')
+
+    # == Private Properties ========================================================================
+    @property
+    def _ping_cmd(self) -> str:
+        if is_windows():
+            return f'ping -n {self.num_requests} -w {self.request_timeout}'
+        return f'ping -c {self.num_requests} -W {self.request_timeout}'
+
+    # == Private Functions =========================================================================
     def _capture_target(self, target: str):
-        # eprint('.', end='', flush=True)
         result = self._ping_it(target)
         self._target_dict[target] = result
         eprint('.', end='', flush=True)
@@ -169,11 +217,41 @@ class Pinger():
 
         return ping_result
     
-    @property
-    def _ping_cmd(self) -> str:
-        if is_windows():
-            return f'ping -n {self.num_requests} -w {self.request_timeout}'
-        return f'ping -c {self.num_requests} -W {self.request_timeout}'
+    def _output_json(self, json_type: str ):
+        if json_type == 'json':
+            print(json.dumps(self.to_dict()))
+        else:
+            print(json.dumps(self.to_dict(), indent=2))
+
+    def _output_csv(self):
+        timestamp = dt.now().strftime('%m/%d/%Y %H:%M:%S')
+        print('timestamp,source,target,pkt_sent,pkt_recv,pkt_lost,rtt_min,rtt_max,rtt_avg,error')
+        for target_host, r_entry in self.results.items():
+            print(f'{timestamp},{self.source_host},{target_host}, ' +
+                                                    f'{r_entry.packets[0]},' + 
+                                                    f'{r_entry.packets[1]},' +  
+                                                    f'{r_entry.packets[2]},' + 
+                                                    f'{r_entry.rtt[0]},' + 
+                                                    f'{r_entry.rtt[1]},' + 
+                                                    f'{r_entry.rtt[2]},' + 
+                                                    f'{r_entry.error}')
+
+    def _output_text(self):
+        print('                                          Packets         RTT (ms)')
+        print('Source          Target                Sent Recv Lost   Min  Max  Avg  Error Msg')
+        print('--------------- --------------------  ---- ---- ----  ---- ---- ----  --------------------------------------')
+        for target_host, r_entry in self.results.items():
+            print(f'{self.source_host:15} {target_host:20}  ' +
+                    f'{r_entry.packets[0]:4d} ' +
+                    f'{r_entry.packets[1]:4d} ' +
+                    f'{r_entry.packets[2]:4d}  ' +
+                    f'{r_entry.rtt[0]:4d} ' +
+                    f'{r_entry.rtt[1]:4d} ' +
+                    f'{r_entry.rtt[2]:4d}  ' +
+                    f'{r_entry.error}')
+
+
+
 
 # == Module Functions ============================================================================
 def setup_logger(log_level: int = logging.INFO):
@@ -192,38 +270,38 @@ def abort_msg(parser: ArgumentParser, msg: str):
     parser.print_usage()
     print(msg)
 
-def output_json(pinger: Pinger, json_type: str ):
-    if json_type == 'json':
-        print(json.dumps(pinger.to_dict()))
-    else:
-        print(json.dumps(pinger.to_dict(), indent=2))
+# def output_json(pinger: Pinger, json_type: str ):
+#     if json_type == 'json':
+#         print(json.dumps(pinger.to_dict()))
+#     else:
+#         print(json.dumps(pinger.to_dict(), indent=2))
 
-def output_csv(pinger: Pinger):
-    timestamp = dt.now().strftime('%m/%d/%Y %H:%M:%S')
-    print('timestamp,source,target,pkt_sent,pkt_recv,pkt_lost,rtt_min,rtt_max,rtt_avg,error')
-    for target_host, r_entry in pinger.results.items():
-        print(f'{timestamp},{pinger.source_host},{target_host}, ' +
-                                                f'{r_entry.packets[0]},' + 
-                                                f'{r_entry.packets[1]},' +  
-                                                f'{r_entry.packets[2]},' + 
-                                                f'{r_entry.rtt[0]},' + 
-                                                f'{r_entry.rtt[1]},' + 
-                                                f'{r_entry.rtt[2]},' + 
-                                                f'{r_entry.error}')
+# def output_csv(pinger: Pinger):
+#     timestamp = dt.now().strftime('%m/%d/%Y %H:%M:%S')
+#     print('timestamp,source,target,pkt_sent,pkt_recv,pkt_lost,rtt_min,rtt_max,rtt_avg,error')
+#     for target_host, r_entry in pinger.results.items():
+#         print(f'{timestamp},{pinger.source_host},{target_host}, ' +
+#                                                 f'{r_entry.packets[0]},' + 
+#                                                 f'{r_entry.packets[1]},' +  
+#                                                 f'{r_entry.packets[2]},' + 
+#                                                 f'{r_entry.rtt[0]},' + 
+#                                                 f'{r_entry.rtt[1]},' + 
+#                                                 f'{r_entry.rtt[2]},' + 
+#                                                 f'{r_entry.error}')
 
-def output_text(pinger: Pinger):
-    print('                                          Packets           RTT')
-    print('Source          Target                Sent Recv Lost   Min  Max  Avg  Error Msg')
-    print('--------------- --------------------  ---- ---- ----  ---- ---- ----  --------------------------------------')
-    for target_host, r_entry in pinger.results.items():
-        print(f'{pinger.source_host:15} {target_host:20}  ' +
-                f'{r_entry.packets[0]:4d} ' +
-                f'{r_entry.packets[1]:4d} ' +
-                f'{r_entry.packets[2]:4d}  ' +
-                f'{r_entry.rtt[0]:4d} ' +
-                f'{r_entry.rtt[1]:4d} ' +
-                f'{r_entry.rtt[2]:4d}  ' +
-                f'{r_entry.error}')
+# def output_text(pinger: Pinger):
+#     print('                                          Packets         RTT (ms)')
+#     print('Source          Target                Sent Recv Lost   Min  Max  Avg  Error Msg')
+#     print('--------------- --------------------  ---- ---- ----  ---- ---- ----  --------------------------------------')
+#     for target_host, r_entry in pinger.results.items():
+#         print(f'{pinger.source_host:15} {target_host:20}  ' +
+#                 f'{r_entry.packets[0]:4d} ' +
+#                 f'{r_entry.packets[1]:4d} ' +
+#                 f'{r_entry.packets[2]:4d}  ' +
+#                 f'{r_entry.rtt[0]:4d} ' +
+#                 f'{r_entry.rtt[1]:4d} ' +
+#                 f'{r_entry.rtt[2]:4d}  ' +
+#                 f'{r_entry.error}')
 
 def main() -> int:
     wait_token = 'milliseconds' if is_windows() else 'seconds'
@@ -267,18 +345,18 @@ def main() -> int:
     pinger.num_requests = args.count
     pinger.request_timeout = args.wait
     pinger.ping_targets()
-
-    # Output
-    if 'json' in args.output:
-        output_json(pinger, args.output)
-    elif args.output == 'csv':
-        output_csv(pinger)
-    else:
-        # default to text
-        output_text(pinger)
+    pinger.output_results(args.output)
+    # # Output
+    # if 'json' in args.output:
+    #     output_json(pinger, args.output)
+    # elif args.output == 'csv':
+    #     output_csv(pinger)
+    # else:
+    #     # default to text
+    #     output_text(pinger)
 
     LOGGER.info('')
-    LOGGER.info(f'{len(pinger.results)} hosts output in {pinger.elapsed_seconds}.')
+    LOGGER.info(f'{len(pinger.results)} hosts processed in {pinger.elapsed_seconds}.')
     return 0
 
 if __name__ == "__main__":
