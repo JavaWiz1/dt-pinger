@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dt-pinger"
-version = "0.1.0"
+version = "0.1.1"
 description = "Python Ping tester"
 authors = ["Al DAmico <JavaWiz1@hotmail.com>"]
 readme = "README.md"
