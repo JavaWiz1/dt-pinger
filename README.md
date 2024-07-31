@@ -66,7 +66,7 @@ When running from the source code, cd to the source directory, then run by using
 <ul><ul>
   <li><code>python dt_pinger.py <i>host1</i></code></li>
   <li><code>python dt_pinger.py <i>host1 [[host2][host3]...]</i></code></li>
-  <li><code>python pypinter.py -i <i>hostlist.txt</i></code></li>
+  <li><code>python dt_pinger.py -i <i>hostlist.txt</i></code></li>
 </ul></ul>
 
 ### If installed via pip or pipx
@@ -76,7 +76,7 @@ the script can be called like an executable.
 <ul><ul>
   <li><code>dt-pinger <i>host1</i></code></li>
   <li><code>dt-pinger <i>host1 [[host2][host3]...]</i></code></li>
-  <li><code>pypinter -i <i>hostlist.txt</i></code></li>
+  <li><code>dt-pinger -i <i>hostlist.txt</i></code></li>
 </ul></ul>
 
 **Note:**   
@@ -111,7 +111,7 @@ my-laptop       google.com               4    4    0    29   32   31
 ## Used as an imported class
 
 ```python
-from py_pinger import Pinger
+from dt_pinger import Pinger
 
 pinger = Pinger('target_host')
 pinger.ping_targets()
