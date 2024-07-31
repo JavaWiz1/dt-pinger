@@ -22,32 +22,12 @@ Statistics captured for each host are:
 ## Installation
 
 To install/use py-pinger, you may: 
-- clone the source directly via github
-- use pip  to install py-pinger
-- use pipx to install py-pinger
 
-### GitHub source install
-
-```
-git clone https://github.com/javawiz1/py-pinger.git
-```
-
-The source will be clone into the py-pinger directory at your current location.
-
-### pip install
-
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install py-pinger.
-
-```bash
-pip install py-pinger [--user]
-```
-
-### pipx install
-
-Use pipx 
-```bash
-pipx install py-pinger
-```
+| Use | Command |
+| ------------- | --------------------------|
+| github [source](https://github.com/JavaWiz1/py-pinger) | git clone https://github.com/javawiz1/py-pinger.git |
+| [pip ](https://pip.pypa.io/en/stable/) | pip install py-pinger [--user] |
+| [pipx](https://pipx.pypa.io/stable/) | pipx install py-pinger | 
 
 ## Usage
 ```
@@ -68,28 +48,35 @@ options:
   -v, --verbose
 ```
 
-- You must supply either hostname(s) or the -i/--input parameter.
-- -i/--input file will ignore lines starting with #, so you can comment the input file if desired.
-- if no -o parameter is specified, the output will be text formatted.
-- -o json will output a json string
-- -o jsonf will output a formatted json string
-- -o csv will create a csv file that can be opened with excel
+#### Parameters
+- You must supply **either** hostname(s) or the -i/--input parameter **not both**.
 
-### From source
+| parameter | Req/Opt | description |
+| ------------ | ------- | -------------------------------------------------------|
+| host | req | one or more host names seperated by space (i.e. host1 host2 host3 ...) |
+| -i / --input | req | text file containing hostnames <ul><li>1 host per line<li>Any lines beginning with # will be ignored and treated as a comment line</li></ul> |
+| -o / --output | opt | output type <ul><li>**text** default if omitted<li>**json** will output an unformatted json string</li><li>**jsonf** will output a formatted json string</li><li>**csv** will create a csv for use in excel</li></ul> |
+| -c / --count | opt | Number of echo packets to send, default 4 |
+| -w / --wait  | opt | Wait time for response (ms windows, secs linux), default 2 seconds |
+
+### Running from python source
 
 When running from the source code
 - cd to the source directory
 - run the following command
 ``` python py-pinger.py host1 ```
 
+
 ### If installed via pip or pipx
 
 The install creates an [entrypoint](https://packaging.python.org/en/latest/specifications/entry-points/) so that
 the script can be called like an executable. 
 
-```python py-pinger.py host1 ``` or ```py-pinger host1```
+``` py-pinger host1 ```
 
-are identical.
+**Note:**
+   
+&nbsp;&nbsp;&nbsp;&nbsp;```python py-pinger.py host1``` and ```py-pinger host1``` are identical.
 
 ## Example
 ```bash
@@ -114,11 +101,11 @@ my-laptop       pc5                      4    4    0     6   18   11
 ```
 
 ## Tips
-1. Console messages are sent to stderr, output data to stdout.  So... you can run the following command:
+1. Console messages are sent to stderr, output data to stdout.  You can redirect stdout, to create a file with just 
+the csv as follows:
 ```
 python py-pinger.py pc1 pc2 pc3 -o csv > pinger.csv
 ```
-To create a .csv file of JUST the data output.
 
 2. If installed via pip or pipx, an entrypoint was created, so as long as you have the proper path, 
    you can run py-pinger (instead of cd to proper directory and running python py-pinger.py)
