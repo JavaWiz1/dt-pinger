@@ -119,7 +119,7 @@ class Pinger():
         timeout_type = 'ms' if is_windows() else 'secs'
         LOGGER.info('')
         LOGGER.info('-'*40)
-        LOGGER.info('pypinger parameters')
+        LOGGER.info('dt-pinger parameters')
         LOGGER.info('-'*40)
         LOGGER.info(f'  Source host    : {self.source_host}')
         LOGGER.info(f'  Target hosts   : {len(self._target_dict):5d}')
@@ -139,7 +139,7 @@ class Pinger():
         
         LOGGER.debug(f'results: {self._target_dict}')
 
-    def output_results(self, output_type: str):
+    def output_results(self, output_type: str = 'text'):
         if 'json' in output_type:
             self._output_json(output_type)
         elif output_type == 'csv':

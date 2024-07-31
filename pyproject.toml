@@ -5,8 +5,8 @@ description = "Python Ping tester"
 authors = ["Al DAmico <JavaWiz1@hotmail.com>"]
 readme = "README.md"
 license = "MIT"
-repository = "https://github.com/JavaWiz1/pypinger"
-keywords = ["ping", "network tool", "python"]
+repository = "https://github.com/JavaWiz1/dt-pinger"
+keywords = ["ping", "network tool", "cli", "python"]
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",

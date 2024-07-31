@@ -1,6 +1,7 @@
 # dt-pinger
 
-**dt-pinger** is a Python script for gathering ping statistics for one or more target hosts.  
+**dt-pinger** is a Python script for gathering ping statistics for one or more target hosts.
+It can be imported into python project, or used as a cli.  
 
 dt-pinger can be used to:
 - identify devices that are up or down on the network
@@ -29,7 +30,7 @@ To install/use dt-pinger, you may:
 | [pip ](https://pip.pypa.io/en/stable/) | pip install dt-pinger [--user] |
 | [pipx](https://pipx.pypa.io/stable/) | pipx install dt-pinger | 
 
-## Usage
+## CLI Usage
 ```
 usage: dt-pinger.py [-h] [-i FILENAME] [-o {csv,json,jsonf,text}] [-c COUNT] [-w WAIT] [-v] [host ...]
 
@@ -62,21 +63,21 @@ options:
 ### Running from python source
 
 When running from the source code, cd to the source directory, then run by using one of the following commands...
-<code><ul><ul>
-  <li>python dt_pinger.py <i>host1</i></li>
-  <li>python dt_pinger.py <i>host1 [[host2][host3]...]</i></li>
-  <li>python pypinter.py -i <i>hostlist.txt</i></li>
-</ul></ul></code>
+<ul><ul>
+  <li><code>python dt_pinger.py <i>host1</i></code></li>
+  <li><code>python dt_pinger.py <i>host1 [[host2][host3]...]</i></code></li>
+  <li><code>python pypinter.py -i <i>hostlist.txt</i></code></li>
+</ul></ul>
 
 ### If installed via pip or pipx
 
 The install creates an [entrypoint](https://packaging.python.org/en/latest/specifications/entry-points/) so that
 the script can be called like an executable. 
-<code><ul><ul>
-  <li>dt-pinger <i>host1</i></li>
-  <li>dt-pinger <i>host1 [[host2][host3]...]</i></li>
-  <li>pypinter -i <i>hostlist.txt</i></li>
-</ul></ul></code>
+<ul><ul>
+  <li><code>dt-pinger <i>host1</i></code></li>
+  <li><code>dt-pinger <i>host1 [[host2][host3]...]</i></code></li>
+  <li><code>pypinter -i <i>hostlist.txt</i></code></li>
+</ul></ul>
 
 **Note:**   
 &nbsp;&nbsp;&nbsp;&nbsp;```python dt_pinger.py host1``` and ```dt-pinger host1``` are identical.
@@ -106,6 +107,39 @@ my-laptop       google.com               4    4    0    29   32   31
 
 6 hosts processed in 7.2 seconds.
 ```
+
+## Used as an imported class
+
+```python
+from py_pinger import Pinger
+
+pinger = Pinger('target_host')
+pinger.ping_targets()
+print(pinger.results)
+```
+or, the program can print formated results as follows:
+```python
+pinger.output()  # defaults to formatted text output
+pinger.output('csv')
+pinger.output('json')
+pinger.output('jsonf')
+pinger.output('text')
+```
+
+```pinger.results``` is a dictionary keyed by hostname.  For each host, packet and round trip time statistics are captured.
+
+| Key | Value |
+| --- | ----- |
+| hostname | target hostname of device being pinged |
+| hostname[packets] | dictionary of packet statistics |
+| hostname[packets][sent] | ping echo requests sent |
+| hostname[packets][received] | request responses received |
+| hostname[packets][lost] | requests lost/dropped |
+| hostname[rtt_ms][min] | round trip time minimum |
+| hostname[rtt_ms][max] | round trip time maximum |
+| hostname[rtt_ms][avg] | round trip time average |
+| hostname[error] | Error if ping was unsuccessful |
+
 
 ## Tips
 1. Console messages are sent to stderr, output data to stdout.  You can redirect stdout, to create a file with just 
