@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "py-pinger"
+version = "0.1.0"
+description = "Python Ping tester"
+authors = ["Al DAmico <JavaWiz1@hotmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.scripts]
+py-pinger = "py-pinger"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
