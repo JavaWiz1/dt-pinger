@@ -146,7 +146,7 @@ class Pinger():
             self._output_csv()
         elif output_type == 'text':
             # default to text
-            self.output_text()
+            self._output_text()
         else:
             LOGGER.error(f'ERROR: Unknown output type [{output_type}]')
             LOGGER.error('  must be one of: csv, json, jsonf or text')
