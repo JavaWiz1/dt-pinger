@@ -1,12 +1,12 @@
-# pypinger
+# dt-pinger
 
-**pypinger** is a Python script for gathering ping statistics for one or more target hosts.  
+**dt-pinger** is a Python script for gathering ping statistics for one or more target hosts.  
 
-pypinger can be used to:
+dt-pinger can be used to:
 - identify devices that are up or down on the network
 - trouble shoot network issues (dropped packets, network congestion, ...)
 
-**pypinger** 
+**dt-pinger** 
 - Only uses standard python modules
 - Tested on Windows and Linux
 - Provides output in multiple formats (csv, json, text)
@@ -21,17 +21,17 @@ Statistics captured for each host are:
 
 ## Installation
 
-To install/use pypinger, you may: 
+To install/use dt-pinger, you may: 
 
 | Use | Command |
 | ------------- | --------------------------|
-| github [source](https://github.com/JavaWiz1/pypinger) | git clone https://github.com/javawiz1/pypinger.git |
-| [pip ](https://pip.pypa.io/en/stable/) | pip install pypinger [--user] |
-| [pipx](https://pipx.pypa.io/stable/) | pipx install pypinger | 
+| github [source](https://github.com/JavaWiz1/dt-pinger) | git clone https://github.com/javawiz1/dt-pinger.git |
+| [pip ](https://pip.pypa.io/en/stable/) | pip install dt-pinger [--user] |
+| [pipx](https://pipx.pypa.io/stable/) | pipx install dt-pinger | 
 
 ## Usage
 ```
-usage: pypinger.py [-h] [-i FILENAME] [-o {csv,json,jsonf,text}] [-c COUNT] [-w WAIT] [-v] [host ...]
+usage: dt-pinger.py [-h] [-i FILENAME] [-o {csv,json,jsonf,text}] [-c COUNT] [-w WAIT] [-v] [host ...]
 
 positional arguments:
   host                  List of one or more hosts to ping
@@ -63,8 +63,8 @@ options:
 
 When running from the source code, cd to the source directory, then run by using one of the following commands...
 <code><ul><ul>
-  <li>python pypinger.py <i>host1</i></li>
-  <li>python pypinger.py <i>host1 [[host2][host3]...]</i></li>
+  <li>python dt_pinger.py <i>host1</i></li>
+  <li>python dt_pinger.py <i>host1 [[host2][host3]...]</i></li>
   <li>python pypinter.py -i <i>hostlist.txt</i></li>
 </ul></ul></code>
 
@@ -73,20 +73,20 @@ When running from the source code, cd to the source directory, then run by using
 The install creates an [entrypoint](https://packaging.python.org/en/latest/specifications/entry-points/) so that
 the script can be called like an executable. 
 <code><ul><ul>
-  <li>pypinger <i>host1</i></li>
-  <li>pypinger <i>host1 [[host2][host3]...]</i></li>
+  <li>dt-pinger <i>host1</i></li>
+  <li>dt-pinger <i>host1 [[host2][host3]...]</i></li>
   <li>pypinter -i <i>hostlist.txt</i></li>
 </ul></ul></code>
 
 **Note:**   
-&nbsp;&nbsp;&nbsp;&nbsp;```python pypinger.py host1``` and ```pypinger host1``` are identical.
+&nbsp;&nbsp;&nbsp;&nbsp;```python dt_pinger.py host1``` and ```dt-pinger host1``` are identical.
 
 ## Example
 ```
-python pypinger.py pc1 pc2 pc3 pc4 pc5 google.com
+python dt_pinger.py pc1 pc2 pc3 pc4 pc5 google.com
 
 ----------------------------------------
-pypinger parameters
+dt-pinger parameters
 ----------------------------------------
   Source host    : my-laptop
   Target hosts   :    20
@@ -111,8 +111,9 @@ my-laptop       google.com               4    4    0    29   32   31
 1. Console messages are sent to stderr, output data to stdout.  You can redirect stdout, to create a file with just 
 the csv as follows:
 ```
-python pypinger.py pc1 pc2 pc3 -o csv > pinger.csv
+python dt_pinger.py pc1 pc2 pc3 -o csv > pinger.csv
 ```
 
-2. If installed via pip or pipx, an entrypoint was created, so as long as you have the proper path, 
-   you can run pypinger (instead of cd to proper directory and running python pypinger.py)
+2. If installed via pip or pipx, an [entrypoint](https://packaging.python.org/en/latest/specifications/entry-points/) was created (i.e. dt-pinger.exe), 
+   so as long as you have the proper path, you can run dt-pinger (instead of cd to proper directory and running python dt_pinger.py).<br>
+   **Note:** dt_pinger.py vs. dt-pinger.exe (underscore vs. hyphen)

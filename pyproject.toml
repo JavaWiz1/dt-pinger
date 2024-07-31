@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "pypinger"
+name = "dt-pinger"
 version = "0.1.0"
 description = "Python Ping tester"
 authors = ["Al DAmico <JavaWiz1@hotmail.com>"]
@@ -18,7 +18,7 @@ include = ["CHANGELOG.md"]
 python = "^3.7"
 
 [tool.poetry.scripts]
-pypinger = "pypinger:main"
+dt-pinger = "dt_pinger:main"
 
 [build-system]
 requires = ["poetry-core"]
