@@ -170,23 +170,30 @@ class Pinger():
         eprint('.', end='', flush=True)
 
     def _ping_it(self, target_host: str) -> PingResult:
-        cmd = f'{self._ping_cmd} {target_host}'
-        ping_result = PingResult()
-
         LOGGER.debug('-'*80)
+        cmd = f'{self._ping_cmd} {target_host}'
         LOGGER.debug(f'command: {cmd}')
+
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         p_stdout, p_stderr = process.communicate()
         p_rc = process.returncode
         p_stdout, p_stderr = p_stdout.decode('utf-8'), p_stderr.decode('utf-8')
         LOGGER.debug(f'[{target_host:15}] p_rc: {p_rc} len(p_stdout): {len(p_stdout)}  len(p_stderr): {len(p_stderr)}')
+        ping_result = PingResult()
         if p_rc != 0:
+            # Bad response, use stderr if there is output
             ping_result.error = p_stderr.strip() if len(p_stderr) > 0 else None
             if ping_result.error is None:
                 ping_result.error = f'({p_rc})'
-                if p_rc == 1:
+                lines = p_stdout.splitlines()                    
+                if len(lines) == 1:
+                    # Use stdout if there is only 1 line
+                    ping_result.error += f' {lines[0]}'
+                elif p_rc == 1:
+                    # Likely target is offline
                     ping_result.error += ' offline?'
-        else: 
+        else:
+            # Good response, parse output
             lines = p_stdout.split("\n") 
             for line in lines:
                 token = line.lstrip()
@@ -259,8 +266,6 @@ class Pinger():
                     f'{r_entry.error}')
 
 
-
-
 # == Module Functions ============================================================================
 def setup_logger(log_level: int = logging.INFO):
     format = DEFAULTS.CONSOLE_FORMAT if log_level == logging.INFO else DEFAULTS.DEBUG_FORMAT
@@ -305,10 +310,8 @@ def pgm_version() -> str:
 
 # ===================================================================================================================
 def main() -> int:
-    ver = pgm_version()
     wait_token = 'milliseconds' if is_windows() else 'seconds'
     wait_time = DEFAULTS.REQUEST_TIMEOUT_WINDOWS if is_windows() else DEFAULTS.REQUEST_TIMEOUT_LINUX
-    prog_n_version = f'{PACKAGE_NAME} v{ver}'
     description  = 'Ping one or more hosts, output packet and rtt data in json, csv or text format.'
     epilog = 'Either host OR -i/--input parameter is REQUIRED.'
     parser = ArgumentParser(prog=PACKAGE_NAME, description=description, epilog=epilog)
@@ -334,7 +337,7 @@ def main() -> int:
         return -1
 
     LOGGER.info('='*80)
-    LOGGER.info(prog_n_version)
+    LOGGER.info(f'{PACKAGE_NAME} v{pgm_version()}')
     LOGGER.info('='*80)
     if len(args.host) > 0:
         host_list = args.host
