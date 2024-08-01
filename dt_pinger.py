@@ -144,6 +144,8 @@ class Pinger():
     def output_results(self, output_type: str = 'text'):
         if 'json' in output_type:
             self._output_json(output_type)
+        elif output_type == 'raw':
+            self._output_raw()
         elif output_type == 'csv':
             self._output_csv()
         elif output_type == 'text':
@@ -225,6 +227,9 @@ class Pinger():
         else:
             print(json.dumps(self.to_dict(), indent=2))
 
+    def _output_raw(self):
+        print(self.to_dict())
+
     def _output_csv(self):
         timestamp = dt.now().strftime('%m/%d/%Y %H:%M:%S')
         print('timestamp,source,target,pkt_sent,pkt_recv,pkt_lost,rtt_min,rtt_max,rtt_avg,error')
@@ -272,54 +277,22 @@ def abort_msg(parser: ArgumentParser, msg: str):
     parser.print_usage()
     print(msg)
 
-# def output_json(pinger: Pinger, json_type: str ):
-#     if json_type == 'json':
-#         print(json.dumps(pinger.to_dict()))
-#     else:
-#         print(json.dumps(pinger.to_dict(), indent=2))
-
-# def output_csv(pinger: Pinger):
-#     timestamp = dt.now().strftime('%m/%d/%Y %H:%M:%S')
-#     print('timestamp,source,target,pkt_sent,pkt_recv,pkt_lost,rtt_min,rtt_max,rtt_avg,error')
-#     for target_host, r_entry in pinger.results.items():
-#         print(f'{timestamp},{pinger.source_host},{target_host}, ' +
-#                                                 f'{r_entry.packets[0]},' + 
-#                                                 f'{r_entry.packets[1]},' +  
-#                                                 f'{r_entry.packets[2]},' + 
-#                                                 f'{r_entry.rtt[0]},' + 
-#                                                 f'{r_entry.rtt[1]},' + 
-#                                                 f'{r_entry.rtt[2]},' + 
-#                                                 f'{r_entry.error}')
-
-# def output_text(pinger: Pinger):
-#     print('                                          Packets         RTT (ms)')
-#     print('Source          Target                Sent Recv Lost   Min  Max  Avg  Error Msg')
-#     print('--------------- --------------------  ---- ---- ----  ---- ---- ----  --------------------------------------')
-#     for target_host, r_entry in pinger.results.items():
-#         print(f'{pinger.source_host:15} {target_host:20}  ' +
-#                 f'{r_entry.packets[0]:4d} ' +
-#                 f'{r_entry.packets[1]:4d} ' +
-#                 f'{r_entry.packets[2]:4d}  ' +
-#                 f'{r_entry.rtt[0]:4d} ' +
-#                 f'{r_entry.rtt[1]:4d} ' +
-#                 f'{r_entry.rtt[2]:4d}  ' +
-#                 f'{r_entry.error}')
-
+# ===================================================================================================================
 def main() -> int:
     wait_token = 'milliseconds' if is_windows() else 'seconds'
     wait_time = DEFAULTS.REQUEST_TIMEOUT_WINDOWS if is_windows() else DEFAULTS.REQUEST_TIMEOUT_LINUX
     description  = 'Ping one or more hosts, output packet and rtt data in json, csv or text format.'
-    epilog = 'Either host OR -i/--input parameter is required REQUIRED.'
+    epilog = 'Either host OR -i/--input parameter is REQUIRED.'
     parser = ArgumentParser(description=description, epilog=epilog)
     parser.add_argument('-i', '--input', type=str, help='Input file with hostnames 1 per line',
                                         metavar='FILENAME')
-    parser.add_argument('-o', '--output', choices=['csv', 'json', 'jsonf', 'text'], default='text',
+    parser.add_argument('-o', '--output', choices=['raw', 'csv', 'json', 'jsonf', 'text'], default='text',
                                         help='Output format (default text)')
     parser.add_argument('-c', '--count', type=int, default=DEFAULTS.NUM_REQUESTS, 
                                         help=f'number of requests to send (default {DEFAULTS.NUM_REQUESTS})')
     parser.add_argument('-w', '--wait', type=int, default=wait_time, 
                                         help=f'{wait_token} to wait before timeout (default {wait_time})')
-    parser.add_argument('-v', '--verbose', action='store_true', default=False)
+    parser.add_argument('-v', '--verbose', action='store_true', default=False, help='Enable debug logging')
     parser.add_argument('host', nargs='*', help='List of one or more hosts to ping')
     args = parser.parse_args()
 
