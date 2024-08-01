@@ -25,6 +25,7 @@ class DEFAULTS:
 
 ESC='\u001b'    
 CURSOR_CLEAR_LINE = f'{ESC}[2K'
+CURSOR_UP         = f'{ESC}[1A'
 
 #========================================================================================================================    
 @dataclass
@@ -128,7 +129,7 @@ class Pinger():
         LOGGER.info(f'  Wait timeout   : {self.request_timeout:5d} ({timeout_type})')
         LOGGER.info('')
 
-        eprint('\n  Processing .', end='', flush=True)
+        eprint('Processing .', end='', flush=True)
         self._start_time = dt.now()
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
             executor.map(self._capture_target, self._target_dict.keys())
@@ -136,6 +137,7 @@ class Pinger():
         eprint(' Done.', end='', flush=True)
         sleep(1.5)
         eprint(CURSOR_CLEAR_LINE)
+        eprint(CURSOR_UP, end='', flush=True)
         
         LOGGER.debug(f'results: {self._target_dict}')
 
