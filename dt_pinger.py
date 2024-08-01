@@ -9,9 +9,11 @@ import sys
 from argparse import ArgumentParser
 from dataclasses import dataclass, field
 from datetime import datetime as dt
+from importlib.metadata import version
 from time import sleep
 from typing import Dict, List, Union
 
+PACKAGE_NAME = "dt-pinger"
 LOGGER = logging.getLogger('pinger')
 
 #========================================================================================================================    
@@ -119,8 +121,7 @@ class Pinger():
         num_workers = min(DEFAULTS.MAX_THREADS, len(self._target_dict))
         timeout_type = 'ms' if is_windows() else 'secs'
         LOGGER.info('')
-        LOGGER.info('-'*40)
-        LOGGER.info('dt-pinger parameters')
+        LOGGER.info('Runtime parameters')
         LOGGER.info('-'*40)
         LOGGER.info(f'  Source host    : {self.source_host}')
         LOGGER.info(f'  Target hosts   : {len(self._target_dict):5d}')
@@ -277,13 +278,40 @@ def abort_msg(parser: ArgumentParser, msg: str):
     parser.print_usage()
     print(msg)
 
+def pgm_version() -> str:
+    '''Retrieve project version from distribution metadata, toml or most recently update python code file'''
+    ver = None
+    try:
+        # __version__ = pkg_resources.get_distribution(PACKAGE_NAME).version
+        ver = version(PACKAGE_NAME)
+    except:  # noqa: E722
+        pass
+    if ver is None:
+        file_list = list(pathlib.Path(__file__).parent.glob("**/pyproject.toml"))
+        if len(file_list) == 1:
+            # Retrieve version from .toml file
+            buff = file_list[0].read_text(encoding='utf-8').splitlines()
+            ver_line = [x for x in buff if x.startswith('version')]
+            if len(ver_line) == 1:
+                ver = ver_line[0].split('=')[1].replace('"','').replace("'",'').strip()
+        if ver is None:
+            # version based on the mod timestamp of the most current updated python code file
+            file_list = list(pathlib.Path(__file__).parent.glob("**/*.py"))
+            ver_date = dt(2000,1,1,0,0,0,0)
+            for file_nm in file_list:
+                ver_date = max(ver_date, dt.fromtimestamp(file_nm.stat().st_mtime))
+            ver = f'{ver_date.year}.{ver_date.month}.{ver_date.day}'    
+    return ver
+
 # ===================================================================================================================
 def main() -> int:
+    ver = pgm_version()
     wait_token = 'milliseconds' if is_windows() else 'seconds'
     wait_time = DEFAULTS.REQUEST_TIMEOUT_WINDOWS if is_windows() else DEFAULTS.REQUEST_TIMEOUT_LINUX
+    prog_n_version = f'{PACKAGE_NAME} v{ver}'
     description  = 'Ping one or more hosts, output packet and rtt data in json, csv or text format.'
     epilog = 'Either host OR -i/--input parameter is REQUIRED.'
-    parser = ArgumentParser(description=description, epilog=epilog)
+    parser = ArgumentParser(prog=PACKAGE_NAME, description=description, epilog=epilog)
     parser.add_argument('-i', '--input', type=str, help='Input file with hostnames 1 per line',
                                         metavar='FILENAME')
     parser.add_argument('-o', '--output', choices=['raw', 'csv', 'json', 'jsonf', 'text'], default='text',
@@ -304,6 +332,10 @@ def main() -> int:
     if len(args.host) == 0 and args.input is None:
         abort_msg(parser, 'Must supply either host(s) or --input arguments.')
         return -1
+
+    LOGGER.info('='*80)
+    LOGGER.info(prog_n_version)
+    LOGGER.info('='*80)
     if len(args.host) > 0:
         host_list = args.host
     else:
@@ -321,14 +353,6 @@ def main() -> int:
     pinger.request_timeout = args.wait
     pinger.ping_targets()
     pinger.output_results(args.output)
-    # # Output
-    # if 'json' in args.output:
-    #     output_json(pinger, args.output)
-    # elif args.output == 'csv':
-    #     output_csv(pinger)
-    # else:
-    #     # default to text
-    #     output_text(pinger)
 
     LOGGER.info('')
     LOGGER.info(f'{len(pinger.results)} hosts processed in {pinger.elapsed_seconds}.')
