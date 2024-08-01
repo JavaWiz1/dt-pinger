@@ -135,6 +135,7 @@ pinger.output('text')
 | hostname[packets][sent] | ping echo requests sent |
 | hostname[packets][received] | request responses received |
 | hostname[packets][lost] | requests lost/dropped |
+| hostname[rtt_ms]      | dictionary of rtt statistics |
 | hostname[rtt_ms][min] | round trip time minimum |
 | hostname[rtt_ms][max] | round trip time maximum |
 | hostname[rtt_ms][avg] | round trip time average |
@@ -143,9 +144,13 @@ pinger.output('text')
 
 ## Tips
 1. Console messages are sent to stderr, output data to stdout.  You can redirect stdout, to create a file with just 
-the csv as follows:
+the csv (or json) as follows:
 ```
 python dt_pinger.py pc1 pc2 pc3 -o csv > pinger.csv
+```
+or
+```
+python dt_pinger.py pc1 pc2 pc3 -o json > pinger.json
 ```
 
 2. If installed via pip or pipx, an [entrypoint](https://packaging.python.org/en/latest/specifications/entry-points/) was created (i.e. dt-pinger.exe), 
