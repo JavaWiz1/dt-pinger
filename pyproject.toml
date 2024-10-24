@@ -19,7 +19,7 @@ python = "^3.10"
 dt-console = "^0.1.5"
 
 [tool.poetry.scripts]
-dt-pinger = "dt_epinger:main"
+dt-pinger = "dt_pinger:main"
 
 [build-system]
 requires = ["poetry-core"]
