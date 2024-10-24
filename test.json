@@ -1,0 +1,262 @@
+{
+  "rasppi4b": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 1,
+      "max": 3,
+      "avg": 2
+    },
+    "error": ""
+  },
+  "rasppi3-1": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 4,
+      "max": 8,
+      "avg": 6
+    },
+    "error": ""
+  },
+  "pimoroni": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 7,
+      "max": 9,
+      "avg": 8
+    },
+    "error": ""
+  },
+  "homeassistant": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 2,
+      "max": 3,
+      "avg": 2
+    },
+    "error": ""
+  },
+  "rasppi0a": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 4,
+      "max": 12,
+      "avg": 7
+    },
+    "error": ""
+  },
+  "raspi-photo": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 6,
+      "max": 11,
+      "avg": 7
+    },
+    "error": ""
+  },
+  "raspi-photo3b": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 6,
+      "max": 14,
+      "avg": 9
+    },
+    "error": ""
+  },
+  "libreelec1": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 5,
+      "max": 107,
+      "avg": 30
+    },
+    "error": ""
+  },
+  "libreelec2": {
+    "packets": {
+      "sent": 0,
+      "received": 0,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 0,
+      "max": 0,
+      "avg": 0
+    },
+    "error": "(1) Ping request could not find host libreelec2. Please check the name and try again."
+  },
+  "libreelec4": {
+    "packets": {
+      "sent": 0,
+      "received": 0,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 0,
+      "max": 0,
+      "avg": 0
+    },
+    "error": "(1) Ping request could not find host libreelec4. Please check the name and try again."
+  },
+  "libreelec7": {
+    "packets": {
+      "sent": 0,
+      "received": 0,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 0,
+      "max": 0,
+      "avg": 0
+    },
+    "error": "(1) Ping request could not find host libreelec7. Please check the name and try again."
+  },
+  "libreelec8": {
+    "packets": {
+      "sent": 0,
+      "received": 0,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 0,
+      "max": 0,
+      "avg": 0
+    },
+    "error": "(1) Ping request could not find host libreelec8. Please check the name and try again."
+  },
+  "voyager": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 3,
+      "max": 3,
+      "avg": 3
+    },
+    "error": ""
+  },
+  "nirvana": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 1,
+      "max": 4,
+      "avg": 2
+    },
+    "error": ""
+  },
+  "thunder": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 0,
+      "max": 0,
+      "avg": 0
+    },
+    "error": ""
+  },
+  "mariamac": {
+    "packets": {
+      "sent": 0,
+      "received": 0,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 0,
+      "max": 0,
+      "avg": 0
+    },
+    "error": "(1) offline?"
+  },
+  "LAPTOP-E996NN3N": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 5,
+      "max": 8,
+      "avg": 5
+    },
+    "error": ""
+  },
+  "google.com": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 28,
+      "max": 32,
+      "avg": 29
+    },
+    "error": ""
+  },
+  "api.amazonalexa.com": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 20,
+      "max": 39,
+      "avg": 25
+    },
+    "error": ""
+  },
+  "api2.afero.net": {
+    "packets": {
+      "sent": 4,
+      "received": 4,
+      "lost": 0
+    },
+    "rtt_ms": {
+      "min": 55,
+      "max": 65,
+      "avg": 58
+    },
+    "error": ""
+  }
+}

@@ -1,6 +1,6 @@
 # dt-pinger
 
-**dt-pinger** is a Python script for gathering ping statistics for one or more target hosts.
+**dt-pinger** is a Python program for gathering ping statistics for one or more target hosts.
 It can be imported into python project, or used as a cli.  
 
 **dt-pinger** can be used to:
@@ -8,10 +8,8 @@ It can be imported into python project, or used as a cli.
 - identify and trouble shoot network issues (dropped packets, network congestion, ...)
 
 **dt-pinger** 
-- Only uses standard python modules
 - Tested on Windows and Linux
 - Provides output in multiple formats (csv, json, text)
-- Is a single python file, not requiring any additional resources
 
 Statistics captured for each host are:
 - ping timestamp
@@ -33,13 +31,14 @@ To install/use **dt-pinger**, you may:
 | [pip ](https://pip.pypa.io/en/stable/) | pip install dt-pinger [--user] |
 | [pipx](https://pipx.pypa.io/stable/) | pipx install dt-pinger | 
 
+When installed with pip or pipx, an entrypoint is created [dt-pinger] which can be run as an executable (i.e. without running via python)
 ---
 ---
 
 ## CLI Usage
 
 ```
-usage: dt_pinger.py [-h] [-i FILENAME] [-o {raw,csv,json,jsonf,text}] [-c COUNT] [-w WAIT] [-v] [host ...]
+usage: dt-pinger [-h] [-i FILENAME] [-o {raw,csv,json,jsonf,text}] [-c COUNT] [-w WAIT] [-v] [host ...]
 
 Ping one or more hosts, output packet and rtt data in json, csv or text format.
 
