@@ -1,6 +1,8 @@
 import concurrent.futures
 import json
+import logging
 import pathlib
+import platform
 import socket
 import subprocess
 import sys
@@ -10,19 +12,9 @@ from datetime import datetime as dt
 from importlib.metadata import version
 from time import sleep
 from typing import Dict, List, Union
-import threading
-
-import dt_tools.logger.logging_helper as lh
-from dt_tools.console.console_helper import ColorFG
-from dt_tools.console.console_helper import ConsoleHelper as console
-from dt_tools.console.spinner import Spinner, SpinnerType
-from dt_tools.os.os_helper import OSHelper as os_helper
-from loguru import logger as LOGGER
 
 PACKAGE_NAME = "dt-pinger"
-
-lock = threading.Lock()
-
+LOGGER = logging.getLogger('pinger')
 
 #========================================================================================================================    
 class DEFAULTS:
@@ -33,10 +25,27 @@ class DEFAULTS:
     DEBUG_FORMAT = '%(asctime)s %(levelname)s %(message)s'
     CONSOLE_FORMAT = '%(message)s'
 
+ESC='\u001b'    
+CURSOR_CLEAR_LINE = f'{ESC}[2K'
+CURSOR_UP         = f'{ESC}[1A'
+
+
+class Console:
+    def print(msg: str, eol: str = '\n', to_stderr: bool = False):
+        out_handle = sys.stderr if to_stderr else sys.stdout
+        print(msg, end=eol, flush=True, file=out_handle)
+
+    def eprint(text: str, **kwargs):
+        if LOGGER.getEffectiveLevel() != logging.DEBUG:
+            # Only print if not in verbose (debug) mode
+            Console.print(text, to_stderr=True, **kwargs)
+
+console = Console
 
 #========================================================================================================================    
 @dataclass
 class PingResult():
+
     packets: list    = field(default_factory=list) # Sent, Received, Lost
     rtt: list        = field(default_factory=list) # Min, Max, Avg
     error: str = ''
@@ -64,6 +73,7 @@ class Pinger():
         pinger.ping_targets()
         print(pinger.results)    
     '''
+
     def __init__(self, target: Union[str, List]):
         self._source_host: str = socket.gethostname()
         self._target_dict: dict = {}
@@ -71,10 +81,9 @@ class Pinger():
             target = [ target ]
         self._target_dict = dict.fromkeys(target, PingResult())
         self._num_requests: int  = DEFAULTS.NUM_REQUESTS
-        self._request_timeout: int = DEFAULTS.REQUEST_TIMEOUT_WINDOWS if os_helper.is_windows() else DEFAULTS.REQUEST_TIMEOUT_LINUX
+        self._request_timeout: int = DEFAULTS.REQUEST_TIMEOUT_WINDOWS if is_windows() else DEFAULTS.REQUEST_TIMEOUT_LINUX
         self._start_time: dt = None
         self._end_time: dt = None
-        self._number_complete: int = 0
 
     # == Public Properties ==========================================================================
     @property
@@ -105,7 +114,7 @@ class Pinger():
     @request_timeout.setter
     def request_timeout(self, value: int):
         if value < 0:
-            self._request_timeout = DEFAULTS.REQUEST_TIMEOUT_WINDOWS if os_helper.is_windows() else DEFAULTS.REQUEST_TIMEOUT_LINUX
+            self._request_timeout = DEFAULTS.REQUEST_TIMEOUT_WINDOWS if is_windows() else DEFAULTS.REQUEST_TIMEOUT_LINUX
         else:
             self._request_timeout = value
 
@@ -115,10 +124,6 @@ class Pinger():
         return self._target_dict
     
     # == Public Functions ==========================================================================
-    def increment_complete(self):
-        with lock:
-            self._number_complete += 1
-
     def to_dict(self) -> Dict:
         '''Return ping results as a dictionary'''
         result_dict = {}
@@ -128,30 +133,27 @@ class Pinger():
 
     def ping_targets(self):
         '''Ping each target and gather statistics.'''
-        total_hosts = len(self._target_dict)
-        num_workers = min(DEFAULTS.MAX_THREADS, total_hosts)
-        timeout_type = 'ms' if os_helper.is_windows() else 'secs'
-        console.print('')
-        console.print_line_seperator('Runtime parameters', 40)
-        console.print(f'  Source host    : {self.source_host}')
-        console.print(f'  Target hosts   : {total_hosts:5d}')
-        console.print(f'  Worker threads : {num_workers:5d}')
-        console.print(f'  Req per host   : {self.num_requests:5d}')
-        console.print(f'  Wait timeout   : {self.request_timeout:5d} ({timeout_type})')
-        console.print('')
+        num_workers = min(DEFAULTS.MAX_THREADS, len(self._target_dict))
+        timeout_type = 'ms' if is_windows() else 'secs'
+        LOGGER.info('')
+        LOGGER.info('Runtime parameters')
+        LOGGER.info('-'*40)
+        LOGGER.info(f'  Source host    : {self.source_host}')
+        LOGGER.info(f'  Target hosts   : {len(self._target_dict):5d}')
+        LOGGER.info(f'  Worker threads : {num_workers:5d}')
+        LOGGER.info(f'  Req per host   : {self.num_requests:5d}')
+        LOGGER.info(f'  Wait timeout   : {self.request_timeout:5d} ({timeout_type})')
+        LOGGER.info('')
 
-        spinner = Spinner('Processing', SpinnerType.DOTS, show_elapsed=True)
-        spinner.start_spinner()
-        # console.print('Processing .', eol='', to_stderr=True)
+        console.eprint('Processing .', eol='')
         self._start_time = dt.now()
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
             executor.map(self._capture_target, self._target_dict.keys())
-        spinner.stop_spinner()
         self._end_time = dt.now()
-        console.print(' Done.', to_stderr=True)
+        console.eprint(' Done.', eol='')
         sleep(1.5)
-        console.clear_line()
-        console.cursor_up()
+        console.eprint(CURSOR_CLEAR_LINE)
+        console.eprint(CURSOR_UP, eol='')
         
         LOGGER.debug(f'results: {self._target_dict}')
 
@@ -172,7 +174,7 @@ class Pinger():
     # == Private Properties ========================================================================
     @property
     def _ping_cmd(self) -> str:
-        if os_helper.is_windows():
+        if is_windows():
             return f'ping -n {self.num_requests} -w {self.request_timeout}'
         return f'ping -c {self.num_requests} -W {self.request_timeout}'
 
@@ -180,9 +182,7 @@ class Pinger():
     def _capture_target(self, target: str):
         result = self._ping_it(target)
         self._target_dict[target] = result
-        
-        # console.print('.', eol='', to_stderr=True)
-        # eprint('.', end='', flush=True)
+        console.eprint('.', eol='')
 
     def _ping_it(self, target_host: str) -> PingResult:
         LOGGER.debug('-'*80)
@@ -212,7 +212,7 @@ class Pinger():
             lines = p_stdout.split("\n") 
             for line in lines:
                 token = line.lstrip()
-                if os_helper.is_windows():
+                if is_windows():
                     if token.startswith('Minimum'):
                         rtt_line = token.strip().split(' ')
                         LOGGER.debug(f'[{target_host:15}] -- rtt ----------------------')
@@ -245,22 +245,19 @@ class Pinger():
         return ping_result
     
     def _output_json(self, json_type: str ):
-        LOGGER.debug('Output to JSON')
         if json_type == 'json':
             console.print(json.dumps(self.to_dict()))
         else:
             console.print(json.dumps(self.to_dict(), indent=2))
 
     def _output_raw(self):
-        LOGGER.debug('Output to RAW Dictionary')
         console.print(self.to_dict())
 
     def _output_csv(self):
-        LOGGER.debug('Output to CSV')
         timestamp = dt.now().strftime('%m/%d/%Y %H:%M:%S')
-        print('timestamp,source,target,pkt_sent,pkt_recv,pkt_lost,rtt_min,rtt_max,rtt_avg,error')
+        console.print('timestamp,source,target,pkt_sent,pkt_recv,pkt_lost,rtt_min,rtt_max,rtt_avg,error')
         for target_host, r_entry in self.results.items():
-            print(f'{timestamp},{self.source_host},{target_host}, ' +
+            console.print(f'{timestamp},{self.source_host},{target_host}, ' +
                                                     f'{r_entry.packets[0]},' + 
                                                     f'{r_entry.packets[1]},' +  
                                                     f'{r_entry.packets[2]},' + 
@@ -270,26 +267,32 @@ class Pinger():
                                                     f'{r_entry.error}')
 
     def _output_text(self):
-        LOGGER.debug('Output to Text')
         console.print('                                          Packets         RTT (ms)')
-        console.print_line_seperator('Source          Target                Sent Recv Lost   Min  Max  Avg  Error Msg')
-        # console.print('--------------- --------------------  ---- ---- ----  ---- ---- ----  --------------------------------------')
+        console.print('Source          Target                Sent Recv Lost   Min  Max  Avg  Error Msg')
+        console.print('--------------- --------------------  ---- ---- ----  ---- ---- ----  --------------------------------------')
         for target_host, r_entry in self.results.items():
             console.print(f'{self.source_host:15} {target_host:20}  ' +
-                          f'{r_entry.packets[0]:4d} ' +
-                          f'{r_entry.packets[1]:4d} ' +
-                          f'{r_entry.packets[2]:4d}  ' +
-                          f'{r_entry.rtt[0]:4d} ' +
-                          f'{r_entry.rtt[1]:4d} ' +
-                          f'{r_entry.rtt[2]:4d}  ' +
-                          f'{console.cwrap(r_entry.error, ColorFG.RED)}')
+                    f'{r_entry.packets[0]:4d} ' +
+                    f'{r_entry.packets[1]:4d} ' +
+                    f'{r_entry.packets[2]:4d}  ' +
+                    f'{r_entry.rtt[0]:4d} ' +
+                    f'{r_entry.rtt[1]:4d} ' +
+                    f'{r_entry.rtt[2]:4d}  ' +
+                    f'{r_entry.error}')
 
 
 # == Module Functions ============================================================================
+def setup_logger(log_level: int = logging.INFO):
+    format = DEFAULTS.CONSOLE_FORMAT if log_level == logging.INFO else DEFAULTS.DEBUG_FORMAT
+    logging.basicConfig(format=format, level=log_level)
+
+def is_windows() -> bool:
+    return (platform.system() == "Windows")
+
+
 def abort_msg(parser: ArgumentParser, msg: str):
     parser.print_usage()
-    LOGGER.error(msg)
-    # console.print(console.cwrap(msg, ColorFG.RED))
+    console.print(msg)
 
 def pgm_version() -> str:
     '''Retrieve project version from distribution metadata, toml or most recently update python code file'''
@@ -318,8 +321,9 @@ def pgm_version() -> str:
 
 # ===================================================================================================================
 def main() -> int:
-    wait_token = 'milliseconds' if os_helper.is_windows() else 'seconds'
-    wait_time = DEFAULTS.REQUEST_TIMEOUT_WINDOWS if os_helper.is_windows() else DEFAULTS.REQUEST_TIMEOUT_LINUX
+
+    wait_token = 'milliseconds' if is_windows() else 'seconds'
+    wait_time = DEFAULTS.REQUEST_TIMEOUT_WINDOWS if is_windows() else DEFAULTS.REQUEST_TIMEOUT_LINUX
     description  = 'Ping one or more hosts, output packet and rtt data in json, csv or text format.'
     epilog = 'Either host OR -i/--input parameter is REQUIRED.'
     parser = ArgumentParser(prog=PACKAGE_NAME, description=description, epilog=epilog)
@@ -336,16 +340,17 @@ def main() -> int:
     args = parser.parse_args()
 
     # Setup logger
-    log_level = "DEBUG" if args.verbose else "INFO"
-    lh.configure_logger(log_level=log_level)
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+    setup_logger(log_level)
 
     # Validate parameters
     if len(args.host) == 0 and args.input is None:
         abort_msg(parser, 'Must supply either host(s) or --input arguments.')
         return -1
 
-    console.print_line_seperator(' ', 80)
-    console.print_line_seperator(f'{PACKAGE_NAME} v{pgm_version()}', 80)
+    LOGGER.info('='*80)
+    LOGGER.info(f'{PACKAGE_NAME} v{pgm_version()}')
+    LOGGER.info('='*80)
     if len(args.host) > 0:
         host_list = args.host
     else:
