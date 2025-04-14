@@ -29,9 +29,23 @@ ESC='\u001b'
 CURSOR_CLEAR_LINE = f'{ESC}[2K'
 CURSOR_UP         = f'{ESC}[1A'
 
+
+class Console:
+    def print(msg: str, eol: str = '\n', to_stderr: bool = False):
+        out_handle = sys.stderr if to_stderr else sys.stdout
+        print(msg, end=eol, flush=True, file=out_handle)
+
+    def eprint(text: str, **kwargs):
+        if LOGGER.getEffectiveLevel() != logging.DEBUG:
+            # Only print if not in verbose (debug) mode
+            Console.print(text, to_stderr=True, **kwargs)
+
+console = Console
+
 #========================================================================================================================    
 @dataclass
 class PingResult():
+
     packets: list    = field(default_factory=list) # Sent, Received, Lost
     rtt: list        = field(default_factory=list) # Min, Max, Avg
     error: str = ''
@@ -59,6 +73,7 @@ class Pinger():
         pinger.ping_targets()
         print(pinger.results)    
     '''
+
     def __init__(self, target: Union[str, List]):
         self._source_host: str = socket.gethostname()
         self._target_dict: dict = {}
@@ -130,15 +145,15 @@ class Pinger():
         LOGGER.info(f'  Wait timeout   : {self.request_timeout:5d} ({timeout_type})')
         LOGGER.info('')
 
-        eprint('Processing .', end='', flush=True)
+        console.eprint('Processing .', eol='')
         self._start_time = dt.now()
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
             executor.map(self._capture_target, self._target_dict.keys())
         self._end_time = dt.now()
-        eprint(' Done.', end='', flush=True)
+        console.eprint(' Done.', eol='')
         sleep(1.5)
-        eprint(CURSOR_CLEAR_LINE)
-        eprint(CURSOR_UP, end='', flush=True)
+        console.eprint(CURSOR_CLEAR_LINE)
+        console.eprint(CURSOR_UP, eol='')
         
         LOGGER.debug(f'results: {self._target_dict}')
 
@@ -167,7 +182,7 @@ class Pinger():
     def _capture_target(self, target: str):
         result = self._ping_it(target)
         self._target_dict[target] = result
-        eprint('.', end='', flush=True)
+        console.eprint('.', eol='')
 
     def _ping_it(self, target_host: str) -> PingResult:
         LOGGER.debug('-'*80)
@@ -231,18 +246,18 @@ class Pinger():
     
     def _output_json(self, json_type: str ):
         if json_type == 'json':
-            print(json.dumps(self.to_dict()))
+            console.print(json.dumps(self.to_dict()))
         else:
-            print(json.dumps(self.to_dict(), indent=2))
+            console.print(json.dumps(self.to_dict(), indent=2))
 
     def _output_raw(self):
-        print(self.to_dict())
+        console.print(self.to_dict())
 
     def _output_csv(self):
         timestamp = dt.now().strftime('%m/%d/%Y %H:%M:%S')
-        print('timestamp,source,target,pkt_sent,pkt_recv,pkt_lost,rtt_min,rtt_max,rtt_avg,error')
+        console.print('timestamp,source,target,pkt_sent,pkt_recv,pkt_lost,rtt_min,rtt_max,rtt_avg,error')
         for target_host, r_entry in self.results.items():
-            print(f'{timestamp},{self.source_host},{target_host}, ' +
+            console.print(f'{timestamp},{self.source_host},{target_host}, ' +
                                                     f'{r_entry.packets[0]},' + 
                                                     f'{r_entry.packets[1]},' +  
                                                     f'{r_entry.packets[2]},' + 
@@ -252,11 +267,11 @@ class Pinger():
                                                     f'{r_entry.error}')
 
     def _output_text(self):
-        print('                                          Packets         RTT (ms)')
-        print('Source          Target                Sent Recv Lost   Min  Max  Avg  Error Msg')
-        print('--------------- --------------------  ---- ---- ----  ---- ---- ----  --------------------------------------')
+        console.print('                                          Packets         RTT (ms)')
+        console.print('Source          Target                Sent Recv Lost   Min  Max  Avg  Error Msg')
+        console.print('--------------- --------------------  ---- ---- ----  ---- ---- ----  --------------------------------------')
         for target_host, r_entry in self.results.items():
-            print(f'{self.source_host:15} {target_host:20}  ' +
+            console.print(f'{self.source_host:15} {target_host:20}  ' +
                     f'{r_entry.packets[0]:4d} ' +
                     f'{r_entry.packets[1]:4d} ' +
                     f'{r_entry.packets[2]:4d}  ' +
@@ -274,14 +289,10 @@ def setup_logger(log_level: int = logging.INFO):
 def is_windows() -> bool:
     return (platform.system() == "Windows")
 
-def eprint(*args, **kwargs):
-    if LOGGER.getEffectiveLevel() != logging.DEBUG:
-        # Only print if not in verbose (debug) mode
-        print(*args, file=sys.stderr, **kwargs)
 
 def abort_msg(parser: ArgumentParser, msg: str):
     parser.print_usage()
-    print(msg)
+    console.print(msg)
 
 def pgm_version() -> str:
     '''Retrieve project version from distribution metadata, toml or most recently update python code file'''
@@ -310,6 +321,7 @@ def pgm_version() -> str:
 
 # ===================================================================================================================
 def main() -> int:
+
     wait_token = 'milliseconds' if is_windows() else 'seconds'
     wait_time = DEFAULTS.REQUEST_TIMEOUT_WINDOWS if is_windows() else DEFAULTS.REQUEST_TIMEOUT_LINUX
     description  = 'Ping one or more hosts, output packet and rtt data in json, csv or text format.'
