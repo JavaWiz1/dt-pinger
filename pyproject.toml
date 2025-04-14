@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dt-pinger"
-version = "0.1.4"
+version = "0.1.5"
 description = "Python Ping tester"
 authors = ["Al DAmico <JavaWiz1@hotmail.com>"]
 readme = "README.md"
@@ -16,10 +16,13 @@ include = ["CHANGELOG.md"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-dt-console = "^0.1.5"
+# dt-console = "*"
+# loguru = "^0.7.3"
+# dt-foundation = "*"
 
 [tool.poetry.scripts]
-dt-pinger = "dt_epinger:main"
+# dt-epinger = "dt_epinger:main"
+dt-pinger  = "dt_pinger:main"
 
 [build-system]
 requires = ["poetry-core"]
